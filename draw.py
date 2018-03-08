@@ -2,6 +2,14 @@ from display import *
 from matrix import *
 
 
+def add_circle( points, cx, cy, cz, r, step ):
+    pass
+
+def add_curve( points, x0, y0, x1, y1, x2, y2, x3, y3, step, curve_type ):
+    pass
+
+
+
 def draw_lines( matrix, screen, color ):
     if len(matrix) < 2:
         print 'Need at least 2 points to draw'
@@ -9,10 +17,10 @@ def draw_lines( matrix, screen, color ):
     
     point = 0
     while point < len(matrix) - 1:
-        draw_line( matrix[point][0],
-                   matrix[point][1],
-                   matrix[point+1][0],
-                   matrix[point+1][1],
+        draw_line( int(matrix[point][0]),
+                   int(matrix[point][1]),
+                   int(matrix[point+1][0]),
+                   int(matrix[point+1][1]),
                    screen, color)    
         point+= 2
         

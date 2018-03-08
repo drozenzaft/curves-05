@@ -8,8 +8,15 @@ The file follows the following format:
      Every command is a single character that takes up a line
      Any command that requires arguments must have those arguments in the second line.
      The commands are as follows:
+	 circle: add a circle to the edge matrix - 
+	    takes 4 arguments (cx, cy, cz, r)
+	 hermite: add a hermite curve to the edge matrix -
+	    takes 8 arguments (x0, y0, x1, y1, rx0, ry0, rx1, ry1)
+	 bezier: add a bezier curve to the edge matrix -
+	    takes 8 arguments (x0, y0, x1, y1, x2, y2, x3, y3)
+
          line: add a line to the edge matrix - 
-	    takes 6 arguments (x0, y0, z0, x1, y1, z1)
+	    takes 6 arguemnts (x0, y0, z0, x1, y1, z1)
 	 ident: set the transform matrix to the identity matrix - 
 	 scale: create a scale matrix, 
 	    then multiply the transform matrix by the scale matrix - 
@@ -31,55 +38,64 @@ The file follows the following format:
 
 See the file script for an example of the file format
 """
-#rounding the final matrix
-def roundMatrix(m):
-    for r in range(len(m)):
-        for c in range(len(m[r])):
-            m[r][c] = int(m[r][c])
-          
-def parse_file( fname, points, transform, screen, color ):
-    f = open(fname,'r')
-    f = f.read()
-    g = f.split('\n')
-    for c in range(len(g)):
-        g[c] = g[c].split(' ')
-        for k in range(len(g[c])):
-            if g[c][k].isdigit():
-                g[c][k] = int(g[c][k])
-    i = 0
-    while i < len(g):
-        if g[i][0] == 'line':
-            i += 1
-            add_edge(points,g[i][0],g[i][1],g[i][2],g[i][3],g[i][4],g[i][5])
-        elif g[i][0] == 'ident':
+ARG_COMMANDS = [ 'line', 'scale', 'move', 'rotate', 'save' ]
+
+def parse_file( fname, edges, transform, screen, color ):
+
+    f = open(fname)
+    lines = f.readlines()
+
+    c = 0
+    while c < len(lines):
+        line = lines[c].strip()
+        #print ':' + line + ':'
+
+        if line in ARG_COMMANDS:
+            c+= 1
+            args = lines[c].strip().split(' ')
+
+        if line == 'line':            
+            #print 'LINE\t' + str(args)
+
+            add_edge( edges,
+                      float(args[0]), float(args[1]), float(args[2]),
+                      float(args[3]), float(args[4]), float(args[5]) )
+
+        elif line == 'scale':
+            #print 'SCALE\t' + str(args)
+            t = make_scale(float(args[0]), float(args[1]), float(args[2]))
+            matrix_mult(t, transform)
+
+        elif line == 'move':
+            #print 'MOVE\t' + str(args)
+            t = make_translate(float(args[0]), float(args[1]), float(args[2]))
+            matrix_mult(t, transform)
+
+        elif line == 'rotate':
+            #print 'ROTATE\t' + str(args)
+            theta = float(args[1]) * (math.pi / 180)
+            
+            if args[0] == 'x':
+                t = make_rotX(theta)
+            elif args[0] == 'y':
+                t = make_rotY(theta)
+            else:
+                t = make_rotZ(theta)
+            matrix_mult(t, transform)
+                
+        elif line == 'ident':
             ident(transform)
-        elif g[i][0] == 'scale':
-            i += 1
-            s = make_scale(g[i][0],g[i][1],g[i][2])
-            matrix_mult(s,transform)
-        elif g[i][0] == 'move':
-            i += 1
-            s = make_translate(g[i][0],g[i][1],g[i][2])
-            matrix_mult(s,transform)
-        elif g[i][0] == 'rotate':
-            i += 1
-            if g[i][0] == 'z':
-                s = make_rotZ(g[i][1])
-            elif g[i][0] == 'y':
-                s = make_rotY(g[i][1])
-            elif g[i][0] == 'x':
-                s = make_rotX(g[i][1])
-            matrix_mult(s,transform)
-        elif g[i][0] == 'apply':
-            matrix_mult(transform,points)
-        elif g[i][0] == 'display':
+
+        elif line == 'apply':
+            matrix_mult( transform, edges )
+
+        elif line == 'display' or line == 'save':
             clear_screen(screen)
-            roundMatrix(points)
-            draw_lines(points,screen,color)
-            display(screen)
-        elif g[i][0] == 'save':
-            roundMatrix(points)
-            draw_lines(points,screen,color)
-            i += 1
-            save_extension(screen,g[i][0])
-        i += 1
+            draw_lines(edges, screen, color)
+
+            if line == 'display':
+                display(screen)
+            else:
+                save_extension(screen, args[0])
+            
+        c+= 1
