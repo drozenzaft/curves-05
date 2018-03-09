@@ -12,7 +12,6 @@ def make_bezier():
     m[2][0] = -3
     m[2][1] = 3
     m[3][0] = 1
-    print_matrix(m)
     return m
 
 def make_hermite():
